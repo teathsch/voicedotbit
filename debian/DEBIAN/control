@@ -1,0 +1,16 @@
+Package: voicedotbit
+Version: 0.1
+Section: web 
+Priority: optional
+Architecture: i386
+Essential: no
+Depends: libcurl4-openssl-dev, libboost-all-dev, libasio-dev, libssl-dev, libsqlite3-dev, libgtkmm-2.4-dev
+Pre-Depends:
+Recommends:
+Suggests:
+Installed-Size: 1985
+Maintainer: Heath Schultz [teathsch@jailcity.com]
+Conflicts:
+Replaces:
+Provides: voicedotbit
+Description: GUI front-end for namecoind

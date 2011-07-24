@@ -1,0 +1,14 @@
+#!/bin/bash
+cp ../voicedotbit ./data/usr/bin/
+
+cd data
+tar -cf ../data.tar *
+cd ..
+gzip data.tar
+
+cd DEBIAN
+tar -cf ../control.tar *
+cd ..
+gzip control.tar
+
+ar rcv voicedotbit_0.1_i386.deb debian-binary data.tar.gz control.tar.gz

@@ -1,0 +1,27 @@
+Dependencies
+============
+
+libcurl
+libcrypto (openssl)
+asio c++ networking library
+boost c++ libraries
+libsqlite3 database library
+libgtkmm-2.4 c++ gtk wrapper library
+
+Ubuntu Dependencies
+===================
+
+These are the debian packages you need if
+you are running an Ubuntu based distribution.
+
+libcurl4-openssl-dev
+libboost-all-dev
+libasio-dev
+libssl-dev
+libsqlite3-dev
+libgtkmm-2.4-dev
+
+Installation
+============
+
+1. Type `make clean ; make`
