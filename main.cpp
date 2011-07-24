@@ -50,7 +50,11 @@ template<typename ResType> bool do_main_loop(ResType & resources) {
 			char pvt_key_coded[256];
 			char pub_key_coded[256];
 
-			curve25519_keypairgen(pvt_key, pub_key);
+//			curve25519_keypairgen(pvt_key, pub_key);
+			for (size_t i = 0; i < 32; i++) {
+				pvt_key[i] = rand();
+				pub_key[i] = rand();
+			}
 
 			int len_pvt_key_coded =base64_encode(32,(char *)pvt_key,pvt_key_coded);
 			int len_pub_key_coded =base64_encode(32,(char *)pub_key,pub_key_coded);
