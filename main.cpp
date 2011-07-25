@@ -14,7 +14,7 @@
 #include "interface.h"
 #include "keyvals.h"
 #include "resources.h"
-#include "curve25519.h"
+//#include "curve25519.h"
 #include "base64.h"
 #include "parsencconfig.h"
 #include <boost/thread.hpp>

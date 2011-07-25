@@ -6,7 +6,7 @@
 #define ONIONSERVER_H
 
 #include "server.h"
-#include "cryptopeer.h"
+//#include "cryptopeer.h"
 
 #include <map>
 
@@ -30,8 +30,8 @@ template<typename IO> class onion_server_t : public server<> {
 		bool handle_error() { return true; }
 
 	private:
-		map<string, crypto_peer> peers;
-		map<string, crypto_peer> users;
+//		map<string, crypto_peer> peers;
+//		map<string, crypto_peer> users;
 
 }; typedef onion_server_t<asio::io_service> onion_server;
 
