@@ -14,7 +14,6 @@
 #include "interface.h"
 #include "keyvals.h"
 #include "resources.h"
-//#include "curve25519.h"
 #include "base64.h"
 #include "parsencconfig.h"
 #include <boost/thread.hpp>
@@ -39,7 +38,8 @@ template<typename ResType> bool do_main_loop(ResType & resources) {
 //		cout << "Name to check: " << *it << endl;
 
 		sqlite3_result res;
-		db("SELECT `name` FROM `ecdh_keys` WHERE `name`='" + *it + "';", res);
+		db("SELECT `name` FROM `ecdh_keys` WHERE `name`='" +
+		 escape_string(*it) + "';", res);
 
 //		cout << res.size() << endl;
 
@@ -50,7 +50,6 @@ template<typename ResType> bool do_main_loop(ResType & resources) {
 			char pvt_key_coded[256];
 			char pub_key_coded[256];
 
-//			curve25519_keypairgen(pvt_key, pub_key);
 			for (size_t i = 0; i < 32; i++) {
 				pvt_key[i] = rand();
 				pub_key[i] = rand();
@@ -115,8 +114,6 @@ int main(int argc, char ** argv) {
 		 "This product includes cryptographic software written by Eric Young"
 		 "(eay@cryptsoft.com).  This product includes software written by Tim"
 		 "Hudson (tjh@cryptsoft.com).\n" << endl;
-
-		cout << "This program is powered by Curve25519.\n" << endl;
 
 		boost::program_options::options_description desc("Allowed Options");
 

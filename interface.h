@@ -41,7 +41,7 @@ class Buddy_t : public Gtk::HBox {
 			this->set_unfocused();
 
 			sqlite3_result qres;
-			res->get_db()("SELECT `reply` FROM `buddies` WHERE `name`='" + tempname + "';", qres);
+			res->get_db()("SELECT `reply` FROM `buddies` WHERE `name`='" + escape_string(tempname) + "';", qres);
 
 			string reply = "";
 			if (qres.size() == 0 || qres.front()["reply"].empty()) {
@@ -137,9 +137,9 @@ class BuddyList {
 				mainwin.show_all_children();
 
 				res.get_db()("INSERT INTO `buddies` VALUES "
-				                     "(  '" + name     + \
-				                     "', '" + nickname + \
-				                     "', '" + reply + "'  );"       );
+				                     "(  '" + escape_string(name)     + \
+				                     "', '" + escape_string(nickname) + \
+				                     "', '" + escape_string(reply) + "'  );" );
 
 			} catch (const char * ex) {
 				std::cerr << "exception: " << ex << std::endl;
@@ -795,7 +795,9 @@ class EditNicknameWindow_t : public Gtk::Window {
 				return;
 			}
 
-			res.get_db()("UPDATE `buddies` SET `alias`='" + nicknameentry.get_text() + "' WHERE name='" + res.get_current_buddy() + "';");
+			res.get_db()("UPDATE `buddies` SET `alias`='" +
+			  escape_string(nicknameentry.get_text()) +
+			 "' WHERE name='" + escape_string(res.get_current_buddy()) + "';");
 
 			buddies[res.get_current_buddy()].set(res.get_current_buddy(), nicknameentry.get_text());
 			this->on_window_closed(NULL);
@@ -1425,7 +1427,8 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 			}
 
 			sqlite3_result qres;
-			res.get_db()("SELECT * FROM `pending_identities` WHERE name='" + newidentityname.get_text() + "';", qres);
+			res.get_db()("SELECT * FROM `pending_identities` WHERE name='" +
+			 escape_string(newidentityname.get_text()) + "';", qres);
 
 			if (qres.size()) {
 				Gtk::MessageDialog msg(*this, "This identity is already pending confirmation on the network.");
@@ -1454,7 +1457,8 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 			} else {
 
 				Gtk::MessageDialog msg(*this, "Success! Your new identity will show up as pending for a while.");
-				res.get_db()("INSERT INTO `pending_identities` VALUES ('" + newidentityname.get_text() + "');");
+				res.get_db()("INSERT INTO `pending_identities` VALUES ('" +
+				 escape_string(newidentityname.get_text()) + "');");
 				msg.run();
 
 			}
@@ -1931,7 +1935,8 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 						identitywindow.add_row((*it)["name"], "Pending", res.get_current_identity() == (*it)["name"]);
 
 					} else {
-						res.get_db()("DELETE FROM `pending_identities` WHERE name='" + (*it)["name"] + "';");
+						res.get_db()("DELETE FROM `pending_identities` WHERE name='" +
+						 escape_string((*it)["name"]) + "';");
 					}
 				}
 
@@ -1983,7 +1988,8 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 				if (rc == false) {
 					Gtk::MessageDialog msg(*this, "Couldn't erase buddy: none selected.");
 				} else {
-					res.get_db()("DELETE FROM `buddies` WHERE name='" + res.get_current_buddy() + "';");
+					res.get_db()("DELETE FROM `buddies` WHERE name='" +
+					 escape_string(res.get_current_buddy()) + "';");
 					res.get_current_buddy() = "";
 				}
 

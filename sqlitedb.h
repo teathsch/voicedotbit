@@ -14,6 +14,20 @@
 typedef std::map<std::string, std::string> sqlite3_row;
 typedef std::deque<sqlite3_row> sqlite3_result;
 
+template<typename StringType>
+const std::string escape_string(StringType temp) {
+
+	std::string res;
+	char * buf = sqlite3_mprintf("%q", std::string(temp).c_str());
+
+	if (buf) {
+		res.append(buf);
+		sqlite3_free(buf);
+	}
+
+   return res;
+}
+
 template<typename DBType> class sqlite3_db_t {
 	public:
 
