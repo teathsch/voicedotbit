@@ -1,9 +1,9 @@
 This program is for facilitating anonymous communications via
 onion routing using identities from the namecoin network.
 
-To use this program, make sure that namecoin is running. Your
-namecoin installation should be using the tor program as a
-router.
+To use this program, make sure that namecoin is running. For
+anonymous usage, your namecoin installation should be using
+the tor program as a router.
 
 For license details, see the LICENSE file.
 
