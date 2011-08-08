@@ -25,7 +25,7 @@ template<typename T> const string do_trim(T before) {
 
 }
 
-template<typename T> int parse_namecoin_config(T & namecoin_config) {
+template<typename T> void parse_namecoin_config(T & namecoin_config) {
 
 	string dir = "/home/" + string(getenv("USER")) + "/.namecoin/";
 

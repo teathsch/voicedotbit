@@ -16,6 +16,7 @@
 #include "resources.h"
 #include "base64.h"
 #include "parsencconfig.h"
+#include "ecdhcrypto.h"
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
@@ -27,15 +28,53 @@ using std::endl;
 
 template<typename ResType> bool do_main_loop(ResType & resources) {
 
+	//vector<string> names;
+
+	//resources.get_json_interface().name_list(names);
+
+	sqlite3_db & db = resources.get_db();
+
+	sqlite3_result pending_res;
+	db("SELECT * FROM `pending_identities` WHERE `blocknum`>0;", pending_res);
+
+	int cur_block = resources.get_json_interface().getblockcount();
+
+	for (sqlite3_result::iterator it = pending_res.begin(); \
+                    it != pending_res.end(); ++it) {
+		if (atoi((*it)["blocknum"].c_str()) <= cur_block) {
+
+			std::cout << "Name:       "  << (*it)["name"]       << std::endl;
+			std::cout << "Long Hash:  "  << (*it)["long_hash" ] << std::endl;
+			std::cout << "Short Hash: "  << (*it)["short_hash"] << std::endl;
+			std::cout << "Value:     \"" << (*it)["thevalue"  ] << "\"" << std::endl;
+
+			//std::cout << "We need to do a name_firstupdate!" << std::endl;
+
+			int rc = resources.get_json_interface().name_firstupdate((*it)["name"], (*it)["long_hash"], (*it)["short_hash"], (*it)["thevalue"]);
+
+			if (rc == 0) {
+				db("UPDATE `pending_identities` SET `blocknum`=0 WHERE `name`='" + (*it)["name"] + "';");
+				std::cout << "did name_firstupdate for: " << (*it)["name"] << std::endl;
+			} else {
+				std::cout << "name_firstupdate failed for: " << (*it)["name"] << std::endl;
+				db("UPDATE `pending_identities` SET `blocknum`=-1 WHERE `name`='" + (*it)["name"] + "';");
+			}
+
+		}
+	}
+
 	vector<string> names;
 
 	resources.get_json_interface().name_list(names);
 
-	sqlite3_db & db = resources.get_db();
-
 	for (vector<string>::iterator it = names.begin(); it != names.end(); ++it) {
 
 //		cout << "Name to check: " << *it << endl;
+
+//		sqlite3_result pending_res;
+		//name long_hash short_hash thevalue blocknum
+//		db("SELECT * FROM `pending_identities` WHERE `blocknum`!=0;", pending_res);
+
 
 		sqlite3_result res;
 		db("SELECT `name` FROM `ecdh_keys` WHERE `name`='" +
@@ -50,10 +89,12 @@ template<typename ResType> bool do_main_loop(ResType & resources) {
 			char pvt_key_coded[256];
 			char pub_key_coded[256];
 
-			for (size_t i = 0; i < 32; i++) {
-				pvt_key[i] = rand();
-				pub_key[i] = rand();
-			}
+			generate_ec_keys(pvt_key, pub_key);
+
+//			for (size_t i = 0; i < 32; i++) {
+//				pvt_key[i] = rand();
+//				pub_key[i] = rand();
+//			}
 
 			int len_pvt_key_coded =base64_encode(32,(char *)pvt_key,pvt_key_coded);
 			int len_pub_key_coded =base64_encode(32,(char *)pub_key,pub_key_coded);
@@ -217,7 +258,12 @@ int main(int argc, char ** argv) {
 
 		if (dbres.size() == 0) {
 			db( "CREATE TABLE `pending_identities` ("
-			     " `name` TEXT NOT NULL DEFAULT '');" );
+			     " `name`"        " TEXT NOT NULL DEFAULT '',"
+			     " `long_hash`"   " TEXT NOT NULL DEFAULT '',"
+			     " `short_hash`"  " TEXT NOT NULL DEFAULT '',"
+			     " `thevalue`"    " TEXT NOT NULL DEFAULT '',"
+			     " `blocknum`"    " INT  NOT NULL DEFAULT 0);");
+
 		} else dbres.clear();
 
 //		string temp_json_user = defaults(db, "json_user", "me");

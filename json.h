@@ -15,6 +15,7 @@ using json_spirit::Object;
 using json_spirit::Pair;
 using std::string;
 using std::vector;
+using std::map;
 
 template<typename StringType> class json_unexpected_t {
 	public:
@@ -22,16 +23,16 @@ template<typename StringType> class json_unexpected_t {
 		const StringType what() { return itsWhat; }
 	private:
 		const StringType itsWhat;
-}; typedef json_unexpected_t<std::string> json_unexpected;
+}; typedef json_unexpected_t<string> json_unexpected;
 
 class json_interface {
 
 	public:
 
-		json_interface(const std::string & user, \
-		               const std::string & pass, \
-		               const std::string & host, \
-		               const std::string & port) : \
+		json_interface(const string & user, \
+		               const string & pass, \
+		               const string & host, \
+		               const string & port) : \
 		 json(user, pass, host, port) {}
 
 		const bool SetUser(const string & user) { json.SetUser(user); return this->check(); }
@@ -86,14 +87,14 @@ class json_interface {
 			return res;
 		}
 
-		void deletetransaction(const std::string & txid) {
+		void deletetransaction(const string & txid) {
 
 			vector<string> params;
 			params.push_back(txid);
 			get_json("deletetransaction", params);
 		}
 
-		const bool validateaddress(const std::string & address) {
+		const bool validateaddress(const string & address) {
 			vector<string> params;
 			params.push_back(address);
 			Value val(get_json("validateaddress", params));
@@ -109,7 +110,7 @@ class json_interface {
 			return isvalid;
 		}
 
-		void transfer_name(const std::string & address, const std::string & name) {
+		void transfer_name(const string & address, const string & name) {
 
 			vector<string> params;
 			params.push_back(name);
@@ -118,8 +119,8 @@ class json_interface {
 			get_json("name_update", params);
 		}
 
-		const std::string escape(const std::string & temp) {
-			std::string res;
+		const string escape(const string & temp) {
+			string res;
 			for (size_t i = 0; i < temp.length(); i++) {
 				if (temp[i] == '"') {
 					res += "\\\"";
@@ -130,14 +131,73 @@ class json_interface {
 			return res;
 		}
 
-		const int name_update(const std::string & name, const std::string & theval) {
+		const int name_update(const string & name, const string & theval) {
 			vector<string> params;
 			params.push_back(name);
 			params.push_back(this->escape(theval));
 			get_json("name_update", params);
 		}
 
-		const int name_new_and_firstupdate(const std::string & name, string theval = "") {
+		const int name_firstupdate(const string & name, string long_hash, string short_hash, const string & thevalue) {
+			vector<string> params;
+			params.push_back(name);
+			params.push_back(long_hash);
+			params.push_back(this->escape(thevalue));
+
+			try {
+				get_json("name_firstupdate", params);
+			} catch (...) {
+
+				std::cout << "Failed with long hash... trying with short hash..." << std::endl;
+
+				params.at(1) = short_hash;
+
+				try {
+
+					get_json("name_firstupdate", params);
+
+				} catch (...) {
+					return 1;
+				}
+
+				//return 1;
+
+			}
+
+			return 0;
+
+		}
+
+		const int name_new(const string & name, string & long_hash, string & short_hash) {
+
+			try {
+
+				vector<string> params;
+				params.push_back(name);
+
+				Value val(get_json("name_new", params));
+
+				Array arr(val.get_array());
+
+				if (arr.size() < 2) {
+					return 3; // not enough hashes
+				}
+
+				long_hash = arr[0].get_str();
+				short_hash  = arr[1].get_str();
+
+				//hash1 = arr[0].get_str();
+				//hash2 = arr[1].get_str();
+
+			} catch (...) {
+				return 2;
+			}
+
+			return 0;
+
+		}
+
+		const int name_new_and_firstupdate(const string & name, string theval = "") {
 
 			vector<string> params;
 			params.push_back(name);
@@ -206,7 +266,7 @@ class json_interface {
 
 
 					if (obj[j].name_ == "account")
-						res.push_back(std::map<string, string>());
+						res.push_back(map<string, string>());
 
 					if (obj[j].name_ == "amount" || \
 					    obj[j].name_ == "fee") {
@@ -283,13 +343,13 @@ class json_interface {
 
 		}
 
-		void getinfo(std::map<std::string, std::string> & mapres) {
+		void getinfo(map<string, string> & mapres) {
 			Value val(get_json("getinfo", vector<string>()));
 			Object obj(val.get_obj());
 
 			for (size_t i = 0; i < obj.size(); i++) {
-				std::string name = obj[i].name_;
-				std::string val;
+				string name = obj[i].name_;
+				string val;
 				       if (name == "version"      || name == "blocks"       || \
 				           name == "connections"  || name == "hashespersec" || \
 				           name == "genproclimit" || name == "keypoololdest" ) {
@@ -309,7 +369,7 @@ class json_interface {
 
 		}
 
-		const std::string name_get_value(const std::string & tempname) {
+		const string name_get_value(const string & tempname) {
 
 			Value val(get_json("name_list", vector<string>()));
 			Array arr(val.get_array());
@@ -339,7 +399,7 @@ class json_interface {
 
 			}
 
-			return std::string("");
+			return string("");
 
 		}
 

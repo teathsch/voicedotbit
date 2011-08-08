@@ -1192,6 +1192,8 @@ template<typename ResType> class IdentityWindow_t : public Gtk::Window {
 			m_TreeView.append_column("Name"  , m_col_name);
 			m_TreeView.append_column("Status", m_col_status);
 
+//m_refTreeModel = Gtk::ListStore::create(m_Columns);
+
 			show_all_children();
 		}
 
@@ -1306,7 +1308,10 @@ template<typename ResType> class IdentityWindow_t : public Gtk::Window {
 template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 
 	public:
-		NewIdentityWindow_t(ResType & tempres) : radio_auto("Auto Configure") , radio_custom("Custom Value") , textview() , save("Save") , res(tempres) {
+		NewIdentityWindow_t(ResType & tempres) : radio_auto("Auto Configure") , radio_custom("Custom Value") , textview() , save("Save") , res(tempres) /* , m_range_spinbutton() , spinbutton(m_range_spinbutton) */ {
+
+			//m_range_spinbutton->set_range(0.0, 10.0);
+			//m_range_spinbutton->set_value(1.0);
 
 			this->set_title("New Identity");
 
@@ -1332,6 +1337,29 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 			vbox.pack_start(newidentityname, Gtk::PACK_SHRINK);
 
 			vbox.add(spacing);
+
+			confirmations_label.set_text("Confirmations");
+
+			vbox.pack_start(confirmations_label, Gtk::PACK_SHRINK);
+
+//			vbox.pack_start(confirmations_label, Gtk::PACK_SHRINK);
+
+			for (size_t i = 0; i < 10; i++) {
+				std::stringstream ss;
+				ss << i;
+				confirmations_combo.append_text(ss.str());
+			}
+
+			confirmations_combo.set_active_text("1");
+
+			vbox.add(confirmations_combo);
+//			vbox.pack_start(confirmations_combo, Gtk::PACK_START);
+
+			spacing3.set_text("\n");
+			vbox.add(spacing3);
+//			vbox.pack_start(spacing3, Gtk::PACK_START);
+
+//			vbox.add(spinbutton);
 
 			method.set_text("Method");
 			vbox.add(method);
@@ -1364,6 +1392,11 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 		}
 
 		void show_hooks() {
+
+			newidentityname.set_text("");
+
+			confirmations_combo.set_active_text("6");
+
 			textviewspacing.hide();
 			textview.hide();
 			auto_config = true;
@@ -1393,10 +1426,14 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 
 		void on_save_clicked() {
 
-			string theval = "onion_value";
+			//string theval = "onion_value";
+
+			std::string theval;
 
 			if (auto_config == false) {
 				theval = textview.get_buffer()->get_text();
+			} else {
+				theval = "onion_value";
 			}
 
 			std::cout << "THE VAL: " << theval << std::endl;
@@ -1436,30 +1473,89 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 				return;
 			}
 
-			rc = res.get_json_interface().\
-			 name_new_and_firstupdate(newidentityname.get_text(), theval);
+			std::string num_confirms = confirmations_combo.get_active_text();
 
-			if (rc == 3) {
+			if (num_confirms != "0") {
 
-				Gtk::MessageDialog msg(*this, "name_new failed: didn't return enough hashes.");
-				msg.run();
+				Gtk::MessageDialog some_confirms_dialog(*this, "Since you are waiting for confirmations, you must leave the program running in order for your transaction to complete. Click OK if you wish to proceed.");
+				int some_confirms_res = some_confirms_dialog.run();
 
-			} else if (rc == 2) {
+				if (some_confirms_res != Gtk::RESPONSE_OK) {
+					std::cout << "User cancelled registration with confirms selected." << std::endl;
+				}
 
-				Gtk::MessageDialog msg(*this, "name_new failed: got an exception.");
-				msg.run();
+				std::string long_hash, short_hash;
 
-			} else if (rc == 1) {
+				rc = res.get_json_interface().\
+				 name_new(newidentityname.get_text(), long_hash, short_hash);
 
-				Gtk::MessageDialog msg(*this, "name_firstupdate failed: got an exception.");
-				msg.run();
+				//std::string long_hash, short_hash;
+
+				if (rc != 0) {
+
+					Gtk::MessageDialog msg(*this, "Error running name registration.");
+					msg.run();
+					return;
+
+				} else {
+
+					std::stringstream ss;
+					ss << res.get_json_interface().getblockcount() + atoi(num_confirms.c_str());
+
+					Gtk::MessageDialog msg(*this, "Success! Your new identity will show up as pending for a while.");
+					string q = "INSERT INTO `pending_identities` VALUES ('" +
+					 escape_string(newidentityname.get_text()) + "','" +
+					 long_hash + "','" + short_hash + "','" + escape_string(theval) + "','" + ss.str() + "');";
+
+					std::cout << "Pending identities query: \"" << q << "\"" << std::endl;
+
+					res.get_db()(q);
+
+					msg.run();
+
+				}
 
 			} else {
 
-				Gtk::MessageDialog msg(*this, "Success! Your new identity will show up as pending for a while.");
-				res.get_db()("INSERT INTO `pending_identities` VALUES ('" +
-				 escape_string(newidentityname.get_text()) + "');");
-				msg.run();
+				Gtk::MessageDialog no_confirms_dialog(*this, "You have selected no confirmations. Someone could purposely interfere with your transaction. Press OK if you are sure that you wish to continute.",
+				 false, Gtk::MESSAGE_QUESTION,
+				 Gtk::BUTTONS_OK_CANCEL);
+
+				int no_confirms_res = no_confirms_dialog.run();
+
+				if (no_confirms_res != Gtk::RESPONSE_OK) {
+					std::cout << "User cancelled 0 confirmation registration." << std::endl;
+					return;
+				}
+
+				//Gtk::MessageDialog warn_no_confirms
+
+				rc = res.get_json_interface().\
+				 name_new_and_firstupdate(newidentityname.get_text(), theval);
+
+				if (rc == 3) {
+
+					Gtk::MessageDialog msg(*this, "name_new failed: didn't return enough hashes.");
+					msg.run();
+
+				} else if (rc == 2) {
+
+					Gtk::MessageDialog msg(*this, "name_new failed: got an exception.");
+					msg.run();
+
+				} else if (rc == 1) {
+
+					Gtk::MessageDialog msg(*this, "name_firstupdate failed: got an exception.");
+					msg.run();
+
+				} else {
+
+					Gtk::MessageDialog msg(*this, "Success! Your new identity will show up as pending for a while.");
+					res.get_db()("INSERT INTO `pending_identities` VALUES ('" +
+					 escape_string(newidentityname.get_text()) + "','','','" + escape_string(theval) + "','0');");
+					msg.run();
+
+				}
 
 			}
 
@@ -1483,6 +1579,11 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 		Gtk::Label newidentitylabel;
 		Gtk::Entry newidentityname;
 
+		Gtk::Label confirmations_label;
+		Gtk::ComboBoxText confirmations_combo;
+//		Gtk::SpinButton spinbutton;
+//		Glib::RefPtr<Gtk::Range> m_range_spinbutton;
+
 		Gtk::RadioButton radio_auto, radio_custom;
 
 		Gtk::RadioButtonGroup group;
@@ -1491,6 +1592,7 @@ template<typename ResType> class NewIdentityWindow_t : public Gtk::Window {
 		Gtk::TextView textview;
 
 		Gtk::Label method;
+		Gtk::Label spacing3;
 		Gtk::Label spacing2;
 		Gtk::Label spacing;
 		Gtk::HSeparator separator;
@@ -1618,9 +1720,20 @@ template<typename ResType> class NewBuddyWindow_t : public Gtk::Window {
 
 }; typedef NewBuddyWindow_t<resources> NewBuddyWindow;
 
-void gui_loop(resources & res, Gtk::Statusbar * statusbar) {
+template<typename MainWindowType>
+void gui_loop(resources & res, Gtk::Statusbar * statusbar, MainWindowType * mainwin) {
 
-	for (; ; usleep(10000000)) {
+//	for (; ; usleep(10000000)) {
+
+		try {
+			// try to repaint identities here
+	//		usleep(1000000);
+			mainwin->load_identities();
+			//mainwin->hide_identities();
+			//mainwin->on_menu_view_identities();
+		} catch(...) {
+			std::cout << "Exception while loading identities." << std::endl;
+		}
 
 		int numconnections = -1;
 
@@ -1642,9 +1755,15 @@ void gui_loop(resources & res, Gtk::Statusbar * statusbar) {
 		statusbar->pop();
 		statusbar->push(ss.str());
 
-	}
+//	}
 
 }
+
+//void the_gui_loop(void * data) {
+
+//	std::cout << "The gui loop" << std::endl;
+
+//}
 
 template<typename ResType> class MainWindow_t : public Gtk::Window {
 
@@ -1667,7 +1786,32 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 			infowindow(res)                  , \
 		   statusbar()                        {
 
-			boost::thread gui_loop_thread(boost::bind(&gui_loop, res, &(this->GetStatusbar())));
+//			sigc::slot<bool> my_slot = sigc::bind(sigc::mem_fun(*this,
+  //            &MainWindow_t<ResType>::on_timeout), 1000000);
+
+  // This is where we connect the slot to the Glib::signal_timeout()
+ // sigc::connection conn = Glib::signal_timeout().connect(my_slot,
+   //       timeout_value);
+
+			int m_timer_number = 0;
+
+			sigc::slot<bool> my_slot = sigc::bind(sigc::mem_fun(*this,
+              &MainWindow_t<ResType>::on_timeout), m_timer_number);
+
+  // This is where we connect the slot to the Glib::signal_timeout()
+  sigc::connection conn = Glib::signal_timeout().connect(my_slot,10000);
+
+
+//			Glib::signal_timeout().connect(
+//			sigc::slot<bool>(sigc::mem_fun(*this, &MainWindow_t<ResType>::on_timeout), 0)
+//			);
+//			Glib::signal_timeout().connect(sigc::bind(sigc::mem_fun(*this, &MainWindow_t<ResType>::on_timeout)));
+
+
+			//Glib::MainLoop;
+			//Glib::MainLoop.add(1000000, &the_gui_loop, NULL);
+
+//			boost::thread gui_loop_thread(boost::bind(&gui_loop<MainWindow_t<ResType> >, res, &(this->GetStatusbar()), this));
 
 			this->set_position(Gtk::WIN_POS_CENTER);
 
@@ -1796,6 +1940,19 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 
 		}
 
+		bool on_timeout(int num) {
+//			std::cout << "LOL TIMEOUT LOL TIMEOUT LOL TIMEOUT" << std::endl;
+
+			gui_loop(res, &(this->GetStatusbar()), this);
+
+//       boost::thread gui_loop_thread(boost::bind(&
+//gui_loop<MainWindow_t<ResType> >, res, &(this->GetStatusbar()), this));
+
+
+
+			return true;
+		}
+
 		void on_status_changed() {
 			std::cout << "Status changed!" << std::endl;
 
@@ -1906,33 +2063,76 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 			}
 		}
 
-		void on_menu_view_identities() {
+//		void hide_identities() {
+//			identitywindow.hide();
+//		}
 
+		void on_menu_view_identities() {
 			try {
+				this->load_identities();
+				identitywindow.show();
+			} catch (...) {
+				Gtk::MessageDialog msg(*this, "Error showing identities. Are you connected?");
+				msg.run();
+			}
+		}
+
+//		sqlite3_result prev_pending_identities;
+
+		void load_identities() {
+
+//			try {
 
 				identitywindow.delete_all_rows();
 
 				vector<string> identities;
+
+//				std::cout << "Getting names from namecoind" << std::endl;
 				res.get_json_interface().name_list(identities);
+//				std::cout << "Done getting names from namecoind" << std::endl;
 
 				sqlite3_result qres;
+//				std::cout << "Selecting pending identities" << std::endl;
 				res.get_db()("SELECT * FROM `pending_identities`;", qres);
+//				std::cout << "Done selecting pending_identities" << std::endl;
+
+//				for (sqlite3_result::iterator it = qres.begin(); it != qres.end(); ++it) {
+
+//				}
 
 				set<string> all_registered;
 
 				for (vector<string>::iterator it = identities.begin(); \
 				           it != identities.end(); ++it) {
+					//std::cout << "STARTED ADDING ROW" << std::endl;
 					identitywindow.add_row(*it, "Registered", res.get_current_identity() == *it);
 					all_registered.insert(*it);
 				}
 
+				int current_block_count = res.get_json_interface().getblockcount();
+
 				for (sqlite3_result::iterator it = qres.begin(); it != qres.end(); ++it) {
 
-					std::cout << "FOUND A PENDING IDENTITY: " << (*it)["name"] << std::endl;
+					//std::cout << "FOUND A PENDING IDENTITY: " << (*it)["name"] << std::endl;
 
+					std::string blocknum = (*it)["blocknum"];
+					std::stringstream ss;
+					ss << atoi(blocknum.c_str()) - current_block_count;
+
+					std::string blocks_until = ss.str();
+
+					std::string status_text = "Update in " + blocks_until + " block";
+					if (blocks_until != "1")
+						status_text += "s";
+
+					if (blocknum == "-1") {
+						status_text = "Failed Registration";
+					} else if (blocknum == "0") {
+						status_text = "Pending";
+					}
 
 					if (all_registered.find((*it)["name"]) == all_registered.end()) {
-						identitywindow.add_row((*it)["name"], "Pending", res.get_current_identity() == (*it)["name"]);
+						identitywindow.add_row((*it)["name"], status_text, res.get_current_identity() == (*it)["name"]);
 
 					} else {
 						res.get_db()("DELETE FROM `pending_identities` WHERE name='" +
@@ -1940,12 +2140,12 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 					}
 				}
 
-				identitywindow.show();
+//				identitywindow.show();
 
-			} catch (...) {
-				Gtk::MessageDialog msg(*this, "Error showing identities: Are you connected?");
-				msg.run();
-			}
+//			} catch (...) {
+//				Gtk::MessageDialog msg(*this, "Error showing identities: Are you connected?");
+//				msg.run();
+//			}
 
 		}
 
@@ -2005,20 +2205,20 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 
 		void on_menu_actions_quit() { this->hide(); }
 
-		void status_loop() {
+		//void status_loop() {
 
-			while (true) {
+		//	while (true) {
 
-				try {
-					std::cout << "checking status.." << std::endl;
+		//		try {
+		//			std::cout << "checking status.." << std::endl;
 
-				} catch (...) {
+		//		} catch (...) {
 
-					std::cout << "Unhandled exception in status thread!" << std::endl;
-				}
-				usleep(1000000);
-			}
-		}
+		//			std::cout << "Unhandled exception in status thread!" << std::endl;
+		//		}
+		//		usleep(1000000);
+		//	}
+		//}
 
 		Gtk::Statusbar & GetStatusbar() { return statusbar; }
 

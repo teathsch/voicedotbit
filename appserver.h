@@ -14,6 +14,9 @@ template<typename IO> class app_server_t : public server<> {
 
 		void handle_data(unsigned char * buf, size_t len) {
 
+			buf = NULL; // suppress warning for now
+			len = 0; // suppress warning for now
+
 //			std::cout << "sender host: " << get_sender_host() << std::endl;
 //			std::cout << "sender port: " << get_sender_port() << std::endl;
 

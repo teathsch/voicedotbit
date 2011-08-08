@@ -36,7 +36,7 @@ template<size_t = 0> class server {
 			return sender_endpoint_.address().to_string();
 		}
 
-		const int get_sender_port() {
+		int get_sender_port() {
 			return sender_endpoint_.port();
 		}
 
