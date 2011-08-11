@@ -90,9 +90,11 @@ class Buddy_t : public Gtk::HBox {
 
 		Gtk::Label label;
 		Gtk::EventBox ebox;
-		ResType * res;
+		//ResType * res;
 		std::string name;
 		std::string nickname;
+
+		ResType * res;
 		std::map<std::string, Buddy_t<ResType> > * pbuddylist;
 
 	private:
@@ -811,7 +813,7 @@ class EditNicknameWindow_t : public Gtk::Window {
 		Gtk::Label nicknamelabel;
 		Gtk::Entry nicknameentry;
 
-		Gtk::HSeparator separator;
+		//Gtk::HSeparator separator;
 
 		Gtk::Button save;
 
@@ -819,6 +821,7 @@ class EditNicknameWindow_t : public Gtk::Window {
 
 		BuddyList & buddies;
 
+		Gtk::HSeparator separator;
 
 }; typedef EditNicknameWindow_t<resources> EditNicknameWindow;
 
@@ -999,6 +1002,8 @@ template<typename ResType> class TransferNameWindow_t : public Gtk::Window {
 
 	private:
 
+		ResType & res;
+
 		Gtk::Frame fr;
 		Gtk::VBox vbox;
 		Gtk::Label label;
@@ -1007,7 +1012,7 @@ template<typename ResType> class TransferNameWindow_t : public Gtk::Window {
 		Gtk::HSeparator separator;
 
 		Gtk::Button button;
-		ResType & res;
+//		ResType & res;
 
 		string name;
 
@@ -1127,16 +1132,21 @@ template<typename ResType> class ConfigNameWindow_t : public Gtk::Window {
 		Gtk::Label spacing2;
 
 		string name;
-		bool auto_config;
+//		bool auto_config;
 
 		Gtk::Frame fr;
 		Gtk::VBox vbox;
 		Gtk::Label method;
-		Gtk::RadioButton radio_auto, radio_custom;
-		Gtk::RadioButtonGroup group;
-		Gtk::Button configure;
 
 		ResType & res;
+		Gtk::Button configure;
+
+		Gtk::RadioButton radio_auto, radio_custom;
+		Gtk::RadioButtonGroup group;
+		bool auto_config;
+//		Gtk::Button configure;
+
+//		ResType & res;
 
 }; typedef ConfigNameWindow_t<resources> ConfigNameWindow;
 
@@ -1779,6 +1789,7 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 		   newbuddywindow(res, Buddies)     , \
 		   editnicknamewindow(res, Buddies) , \
 		   identitywindow(res)              , \
+		   addresseswindow()                , \
 		   newidentitywindow(res)           , \
 		   preferencewindow(res)            , \
 			sendwindow(res)                  , \
@@ -1816,7 +1827,7 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 			this->set_position(Gtk::WIN_POS_CENTER);
 
 			aboutdialog.set_program_name("voice.bit");
-			aboutdialog.set_copyright("Copyright (C) 2011. voice.bit developers. All Rights Reserved.");
+			aboutdialog.set_copyright("Copyright (C) 2011. voice.bit developers. All Rights Reserved.\nThis product includes cryptographic software written by Eric Young(eay@cryptsoft.com).\nThis product includes software written by TimHudson (tjh@cryptsoft.com).");
 			aboutdialog.set_version("0.1 Alpha");
 
 			this->set_title("voice.bit");
@@ -2224,7 +2235,28 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 
 	private:
 
+
+/*
+res(tempres)                     , \
+         Buddies(*this, res, buddy_vbox)  , \
+         vbox()                           , \
+         vbox2()                          , \
+         buddy_vbox()                     , \
+         scrolledWindow()                 , \
+         newbuddywindow(res, Buddies)     , \
+         editnicknamewindow(res, Buddies) , \
+         identitywindow(res)              , \
+         newidentitywindow(res)           , \
+         preferencewindow(res)            , \
+         sendwindow(res)                  , \
+         transactionswindow(res)          , \
+         infowindow(res)                  , \
+         statusbar()                        {
+*/
+
+
 		ResType & res;
+		BuddyList Buddies;
 
 		Gtk::VBox vbox;
 		Gtk::VBox vbox2;
@@ -2232,26 +2264,29 @@ template<typename ResType> class MainWindow_t : public Gtk::Window {
 		Gtk::EventBox ebox;
 		Gtk::ScrolledWindow scrolledWindow;
 
-		BuddyList Buddies;
+//		BuddyList Buddies;
 
 		Gtk::ComboBoxText status;
 
 		Glib::RefPtr<Gtk::UIManager> m_refUIManager;
 		Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup;
 
-		Gtk::Statusbar statusbar;
+//		Gtk::Statusbar statusbar;
 
 		Gtk::AboutDialog aboutdialog;
 
 		NewBuddyWindow      newbuddywindow;
-		PreferenceWindow    preferencewindow;
+		//PreferenceWindow    preferencewindow;
 		EditNicknameWindow  editnicknamewindow;
 		IdentityWindow      identitywindow;
 		AddressesWindow     addresseswindow;
 		NewIdentityWindow   newidentitywindow;
+		PreferenceWindow    preferencewindow;
 		SendWindow          sendwindow;
 		TransactionsWindow  transactionswindow;
 		InfoWindow          infowindow;
+
+		Gtk::Statusbar      statusbar;
 
 };
 

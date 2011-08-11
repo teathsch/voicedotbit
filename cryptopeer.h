@@ -2,7 +2,7 @@
 #define CRYPTOPEER_H
 
 #include "myaes.h"
-#include "curve25519.h"
+#include "ecdhcrypto.h"
 #include "buffer.h"
 
 #include <deque>
@@ -88,8 +88,8 @@ template<size_t = 0> class crypto_user_t : public crypto_friend<> {
 			memset(temp_shared,     0, 32 );
 			memset(encrypted_nonce, 0, 256);
 
-			curve25519_keypairgen(ecdh_pvt, ecdh_pub);
-			curve25519(temp_shared, ecdh_pvt, their_pubkey);
+			generate_ec_keys(ecdh_pvt, ecdh_pub);
+			compute_ec_shared_secret(ecdh_pvt, their_pubkey, temp_shared);
 
 			for (size_t i = 0; i < 32; i++)
 				nonce[i] = rand() % 256;
@@ -110,7 +110,7 @@ template<size_t = 0> class crypto_user_t : public crypto_friend<> {
 
 			memset(decrypted_nonce, 0, 256);
 
-			curve25519(shared, ecdh_pvt, response);
+			compute_ec_shared_secret(ecdh_pvt, response, shared);
 
 			decrypted_nonce_len = aes_decrypt(shared, response + 32, response_len - 32, decrypted_nonce);
 
@@ -157,12 +157,12 @@ template<size_t = 0> class crypto_peer_t : public crypto_friend<> {
 			memset(encrypted_nonce, 0, 256);
 
 			// the first part of the intro is the pubkey
-			curve25519(temp_shared, my_pvtkey, intro);
+			compute_ec_shared_secret(my_pvtkey, intro, temp_shared);
 
 			aes_decrypt(temp_shared, intro + 32, intro_len - 32, decrypted_nonce);
 
-			curve25519_keypairgen(ecdh_pvt, ecdh_pub);
-			curve25519(shared, ecdh_pvt, intro);
+			generate_ec_keys(ecdh_pvt, ecdh_pub);
+			compute_ec_shared_secret(ecdh_pvt, intro, shared);
 
 			unsigned char nonce_xor_pubkey[32];
 
@@ -204,14 +204,14 @@ void do_print(std::string label, const unsigned char * buf, int len) {
 
 int main() {
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	unsigned char ecdh_pub[32];
 	unsigned char ecdh_pvt[32];
-	curve25519_keypairgen(ecdh_pvt, ecdh_pub);
+	generate_ec_keys(ecdh_pvt, ecdh_pub);
 
 	crypto_user user(ecdh_pub);
-	crypto_user user2(user);
+	//crypto_user user2(user);
 
 	unsigned char intro[256];
 	int intro_len = user.get_data(intro);

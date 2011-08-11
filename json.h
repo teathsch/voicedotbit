@@ -35,19 +35,19 @@ class json_interface {
 		               const string & port) : \
 		 json(user, pass, host, port) {}
 
-		const bool SetUser(const string & user) { json.SetUser(user); return this->check(); }
-		const bool SetPass(const string & pass) { json.SetPass(pass); return this->check(); }
-		const bool SetHost(const string & host) { json.SetHost(host); return this->check(); }
-		const bool SetPort(const string & port) { json.SetPort(port); return this->check(); }
+		bool SetUser(const string & user) { json.SetUser(user); return this->check(); }
+		bool SetPass(const string & pass) { json.SetPass(pass); return this->check(); }
+		bool SetHost(const string & host) { json.SetHost(host); return this->check(); }
+		bool SetPort(const string & port) { json.SetPort(port); return this->check(); }
 
-		const bool check() {
+		bool check() {
 			return true; // FIXME: check to see if new credents are valid
 		}
 
-		const string GetUser() { return json.GetUser(); }
-		const string GetPass() { return json.GetPass(); }
-		const string GetHost() { return json.GetHost(); }
-		const string GetPort() { return json.GetPort(); }
+		string GetUser() { return json.GetUser(); }
+		string GetPass() { return json.GetPass(); }
+		string GetHost() { return json.GetHost(); }
+		string GetPort() { return json.GetPort(); }
 
 		Value get_json(const string & method, const vector<string> & params) {
 
@@ -94,7 +94,7 @@ class json_interface {
 			get_json("deletetransaction", params);
 		}
 
-		const bool validateaddress(const string & address) {
+		bool validateaddress(const string & address) {
 			vector<string> params;
 			params.push_back(address);
 			Value val(get_json("validateaddress", params));
@@ -119,7 +119,7 @@ class json_interface {
 			get_json("name_update", params);
 		}
 
-		const string escape(const string & temp) {
+		string escape(const string & temp) {
 			string res;
 			for (size_t i = 0; i < temp.length(); i++) {
 				if (temp[i] == '"') {
@@ -131,14 +131,19 @@ class json_interface {
 			return res;
 		}
 
-		const int name_update(const string & name, const string & theval) {
+		int name_update(const string & name, const string & theval) {
 			vector<string> params;
 			params.push_back(name);
 			params.push_back(this->escape(theval));
-			get_json("name_update", params);
+			try {
+				get_json("name_update", params);
+			} catch (...) {
+				return 1;
+			}
+			return 0;
 		}
 
-		const int name_firstupdate(const string & name, string long_hash, string short_hash, const string & thevalue) {
+		int name_firstupdate(const string & name, string long_hash, string short_hash, const string & thevalue) {
 			vector<string> params;
 			params.push_back(name);
 			params.push_back(long_hash);
@@ -168,7 +173,7 @@ class json_interface {
 
 		}
 
-		const int name_new(const string & name, string & long_hash, string & short_hash) {
+		int name_new(const string & name, string & long_hash, string & short_hash) {
 
 			try {
 
@@ -197,7 +202,7 @@ class json_interface {
 
 		}
 
-		const int name_new_and_firstupdate(const string & name, string theval = "") {
+		int name_new_and_firstupdate(const string & name, string theval = "") {
 
 			vector<string> params;
 			params.push_back(name);
@@ -252,7 +257,7 @@ class json_interface {
 			return ss.str();
 		}
 
-		const bool listtransactions(vector<map<string, string> > & res) {
+		void listtransactions(vector<map<string, string> > & res) {
 
 			Value val(get_json("listtransactions", vector<string>()));
 
@@ -284,7 +289,7 @@ class json_interface {
 
 		}
 
-		const bool getaddressesbyaccount(const string & account, vector<string> & addresses) {
+		bool getaddressesbyaccount(const string & account, vector<string> & addresses) {
 
 			if (addresses.size())
 				addresses.clear();
@@ -369,7 +374,7 @@ class json_interface {
 
 		}
 
-		const string name_get_value(const string & tempname) {
+		string name_get_value(const string & tempname) {
 
 			Value val(get_json("name_list", vector<string>()));
 			Array arr(val.get_array());
@@ -403,7 +408,7 @@ class json_interface {
 
 		}
 
-		const bool name_list(vector<string> & names) {
+		bool name_list(vector<string> & names) {
 
 			if (names.size())
 				names.clear();
@@ -427,7 +432,7 @@ class json_interface {
 			return true;
 		}
 
-		const bool name_scan(const string & name, string & reply, vector<string> & relays) {
+		bool name_scan(const string & name, string & reply, vector<string> & relays) {
 
 			bool found = false;
 

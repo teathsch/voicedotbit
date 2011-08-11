@@ -1,3 +1,7 @@
+// Copyright 2011 Heath Schultz et. al. under liberal licenses. See LICENSE for details.
+
+// Wrap elliptic curve crypto functions
+
 #ifndef ECDHCRYPTO_H
 #define ECDHCRYPTO_H
 
@@ -122,7 +126,7 @@ template<typename UChar> EC_POINT * bn_to_pt(UChar * pub_key, EC_KEY * key,
 	return res;
 }
 
-template<typename UChar> int compute_ec_shared_secret(const UChar * my_pvt_key,
+template<typename UChar> void compute_ec_shared_secret(const UChar * my_pvt_key,
        const UChar * their_pub_key, UChar * shared_secret) {
 
 	EC_KEY   * my_key       = NULL;
@@ -188,7 +192,7 @@ bool do_verify(const UChar * pub_key, const UChar * msg, const int len,
 	return ECDSA_verify(0, dgst, 32, sig, siglen, key) == 1;
 }
 
-template<typename UChar> const bool ec_verify(const UChar * pub_key,
+template<typename UChar> bool ec_verify(const UChar * pub_key,
               const UChar * msg, int len, const UChar * sig, int siglen) {
 
 	// run both 2 and 3 to prevent a traffic analysis attack

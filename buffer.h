@@ -15,8 +15,10 @@ template<size_t max_size> class buffer_t {
 
 		buffer_t(const char * tempdata, size_t templen) : data() , \
 		          len(templen) , iter(0) {
-			if (len > max_size)
-				throw (const char *) ("Overflow.");
+			if (len > max_size) {
+				std::cout << "len: " << len << std::endl;
+				throw (const char *) ("Overflow in buffer()");
+			}
 			memcpy(data, tempdata, len);
 		}
 
@@ -27,7 +29,7 @@ template<size_t max_size> class buffer_t {
 		buffer_t & operator = (const char * rhs) {
 			len = strlen((char *) rhs);
 			if (len > max_size)
-				throw (const char *) ("Overflow.");
+				throw (const char *) ("Overflow in buffer::operator=.");
 			memcpy(data, (int8_t *) rhs, len);
 			iter = 0;
 			return *this;
@@ -63,8 +65,8 @@ template<size_t max_size> class buffer_t {
 			return temp;
 		}
 
-		const char * operator * () const {return (const char *) data; }
-		char * operator * () { return (char *) data; }
+		const char * operator * () const {return (const char *) data + iter; }
+		char * operator * () { return (char *) data + iter; }
 
 		const uint8_t & operator[](const size_t & idx) const {
 			if (idx > max_size)
@@ -82,6 +84,7 @@ template<size_t max_size> class buffer_t {
 
 		const size_t & length()   const { return len;  }
 		const size_t & iterator() const { return iter; }
+		size_t & iterator() { return iter; }
 
 		template<size_t bufsize>
 		friend std::ostream & operator << (std::ostream &,const buffer_t &);
@@ -108,7 +111,13 @@ template<size_t max_size> class buffer_t {
 			return *this;
 		}
 
+//		template<typename T> buffer_t & operator << (const buffer_t<max_size> & rhs) {
+//			this->len += rhs.len;
+//		}
+
 		template<typename T> buffer_t & operator << (const T & rhs) {
+
+			std::cout << "DID GOT HERE" << std::endl;
 
 			if (sizeof(rhs) > max_size)
 				throw (const char *) ("Too big.");
@@ -128,12 +137,12 @@ template<size_t max_size> class buffer_t {
 
 		void begin() { iter = 0; };
 
-		const bool operator < (const buffer_t & rhs) {
+		bool operator < (const buffer_t & rhs) {
 			return strncmp((char *) this->data, (char *) rhs.data, \
 			    this->len < rhs.len ? this->len : rhs.len) < 0;
 		}
 
-		const bool operator ==(const buffer_t & rhs) {
+		bool operator ==(const buffer_t & rhs) {
 			return strncmp(this->data, rhs.data, \
 			    this->len < rhs.len ? this->len : rhs.len) == 0;
 		}

@@ -47,9 +47,9 @@ template<typename T> class resources_t {
 
 		string current_identity;
 		string current_buddy;
-		int inbound_mode;
 		json_interface & json;
 		sqlite3_db     & db;
+		int inbound_mode;
 
 }; typedef resources_t<int> resources;
 
